@@ -1,33 +1,13 @@
-//open r00qlikviewftp.main.russianpost.ru
-//user RPAWlog zR8TDzD5zb
-//binary
-//cd Datamatrix
-//cd RPAW
-//cd 029/398000
-//lcd C:\Elsag\RPAW\Logs
-//mput *.zip
-//LITERAL PASV
-//prompt
-//BY
-
 package main
 
 import (
-	//"crypto/sha256"
-	//    "crypto/tls"
-	"fmt"
-	"path/filepath"
-	//    "io"
 	"flag"
+	"fmt"
+	"github.com/secsy/goftp"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
-//        "github.com/dutchcoders/goftp"
-        "github.com/secsy/goftp"
-	//    "encoding/hex"
-	//"gopkg.in/dutchcoders/goftp.v1"
-        //"github.com/VincenzoLaSpesa/goftp"
-
 )
 
 var ldir = flag.String("ldir", `C:\Elsag\RPAW\Logs\`, "Loclal Dir `C:/Elsag/RPAW/Logs`")
@@ -39,7 +19,7 @@ var wg sync.WaitGroup
 
 func main() {
 	var err error
-//	var ftp *goftp.FTP
+	//	var ftp *goftp.FTP
 
 	flag.Parse()
 	var floger *os.File
@@ -48,23 +28,22 @@ func main() {
 	}
 	defer floger.Close()
 
-config := goftp.Config{
-    User:               *username,
-    Password:           *passwd,
-    ConnectionsPerHost: 1,
-    Timeout:            300 * time.Second,
-    IPv6Lookup:         false,
-    ActiveTransfers:    false,
-    Logger:             floger,//os.Stderr,
-}
+	config := goftp.Config{
+		User:               *username,
+		Password:           *passwd,
+		ConnectionsPerHost: 1,
+		Timeout:            300 * time.Second,
+		IPv6Lookup:         false,
+		ActiveTransfers:    false,
+		Logger:             floger, //os.Stderr,
+	}
 
-        ftp, err := goftp.DialConfig(config, *serv)
-
+	ftp, err := goftp.DialConfig(config, *serv)
 
 	defer ftp.Close()
 	fmt.Println("Successfully connected to", *serv)
 
-        // Массив для хранения списка файлов
+	// Массив для хранения списка файлов
 	fileList := []string{}
 	var mdir, mfile string
 	err = filepath.Walk(*ldir, func(path string, f os.FileInfo, err error) error {
@@ -87,17 +66,15 @@ config := goftp.Config{
 		}
 		mdir, mfile = filepath.Split(file)
 		wg.Add(1)
-                go func(fl *os.File, mfile string){
-		if err := ftp.Store(*remdir+mfile, fl); err != nil {
-			panic(err)
-		}
-		defer fl.Close()
-		defer wg.Done()
+		go func(fl *os.File, mfile string) {
+			if err := ftp.Store(*remdir+mfile, fl); err != nil {
+				panic(err)
+			}
+			defer fl.Close()
+			defer wg.Done()
 		}(fl, mfile)
-//                wg.Wait()
+		//                wg.Wait()
 	}
-        wg.Wait()
+	wg.Wait()
 
 }
-
-/////////////
