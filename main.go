@@ -1,3 +1,8 @@
+//Popurey Sergey 2019
+//https://github.com/pprisn/test_goftp
+//Приложение выполняет отправку группы файлов по маске *.zip расположенных в каталоге локальной машины -ldir 
+//на сервер указаный в параметре -serv, в каталог -remdir на удаленном сервере, 
+//-username имя пользователя и -passwd пароль
 package main
 
 import (
@@ -10,20 +15,22 @@ import (
 	"time"
 )
 
-var ldir = flag.String("ldir", `C:\Elsag\RPAW\Logs\`, "Loclal Dir `C:/Elsag/RPAW/Logs`")
-var serv = flag.String("serv", "r00qlikviewftp.main.russianpost.ru", "Server FTP `r00qlikviewftp.main.russianpost.ru`")
-var remdir = flag.String("remdir", "Datamatrix/RPAW/029/", "Remote dir `Datamatrix/RPAW/029/398000`")
-var username = flag.String("username", "", "User name `RPAWlog`")
-var passwd = flag.String("passwd", "", "Passwd")
+var ldir     = flag.String("ldir",    "", `Каталог локальной машины, например -ldir C:\Elsag\RPAW\Logs\`)
+var serv     = flag.String("serv",    "r00qlikviewftp.main.russianpost.ru", "Адрес сервера FTP,  например -serv `r00qlikviewftp.main.russianpost.ru")
+var remdir   = flag.String("remdir",  "", "Каталог на удаленном сервере, например -remdir Datamatrix/RPAW/029/398000")
+var username = flag.String("username","", "Имя учетной записи подключения к FTP серверу,  например -username mylogin")
+var passwd   = flag.String("passwd",  "", "Пароль пользователя FTP сервером, например: -passwd password")
 var wg sync.WaitGroup
 
 func main() {
 	var err error
-	//	var ftp *goftp.FTP
-
+        //md, mf := filepath.Split(os.Args[0])
+	//fmt.Println(md)
+        //fmt.Println(mf)
 	flag.Parse()
 	var floger *os.File
-	if floger, err = os.Create("send_to_elsag_log.txt"); err != nil {
+
+	if floger, err = os.OpenFile("sendfiles.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644) ; err != nil {
 		panic(err)
 	}
 	defer floger.Close()
@@ -41,7 +48,7 @@ func main() {
 	ftp, err := goftp.DialConfig(config, *serv)
 
 	defer ftp.Close()
-	fmt.Println("Successfully connected to", *serv)
+	fmt.Println("Успешное соединение с сервером", *serv)
 
 	// Массив для хранения списка файлов
 	fileList := []string{}
@@ -73,7 +80,6 @@ func main() {
 			defer fl.Close()
 			defer wg.Done()
 		}(fl, mfile)
-		//                wg.Wait()
 	}
 	wg.Wait()
 
